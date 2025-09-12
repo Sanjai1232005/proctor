@@ -25,13 +25,13 @@ export default function StatusPanel({ icon: Icon, title, status, description, ac
   const { color, icon } = statusConfig[status];
 
   return (
-    <Card className={cn("text-left", status === 'error' && 'border-red-500/50 bg-red-500/5', status === 'connected' && 'border-green-500/50 bg-green-500/5')}>
+    <Card className={cn("text-left transition-colors duration-300", status === 'error' && 'border-destructive/50 bg-destructive/5', status === 'connected' && 'border-green-500/50 bg-green-500/5')}>
       <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-        <div className={cn("p-2 rounded-lg", color, status === 'error' && 'bg-red-500/10', status === 'connected' && 'bg-green-500/10', status === 'pending' && 'bg-amber-500/10')}>
+        <div className={cn("p-2 rounded-lg transition-colors duration-300", color, status === 'error' && 'bg-destructive/10', status === 'connected' && 'bg-green-500/10', status === 'pending' && 'bg-amber-500/10')}>
             <Icon className="h-6 w-6" />
         </div>
         <CardTitle className='text-xl'>{title}</CardTitle>
-        <div className={cn("ml-auto", color)}>{icon}</div>
+        <div className={cn("ml-auto transition-opacity", color)}>{icon}</div>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">{description}</p>
