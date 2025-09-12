@@ -11,7 +11,7 @@ import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartph
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
-import { getTabSwitchWarning } from '@/lib/actions';
+import { getTabSwitchWarning, analyzeFrame } from '@/lib/actions';
 import { useMediaPermissions } from '@/hooks/useMediaPermissions';
 
 import CameraFeed from './CameraFeed';
@@ -27,6 +27,7 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 
 const EXAM_DURATION_SECONDS = 30 * 60; // 30 minutes
+const FRAME_ANALYSIS_INTERVAL = 10000; // 10 seconds
 
 export default function ProctoringDashboard() {
   const router = useRouter();
@@ -39,12 +40,14 @@ export default function ProctoringDashboard() {
   const [agreedToGuidelines, setAgreedToGuidelines] = useState(false);
   const [violations, setViolations] = useState<string[]>([]);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [frameAnalysisViolation, setFrameAnalysisViolation] = useState<string | null>(null);
 
   const { stream: webcamStream, error: webcamError, retry: retryWebcam } = useCamera({video: true, audio: true});
   const { hasVideo, hasAudio, error: mediaPermissionError } = useMediaPermissions(webcamStream);
   
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, requestFullscreen, exitFullscreen } = useFullscreen(fullscreenRef);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (isExamStarted && !isExamSubmitted && mediaPermissionError) {
@@ -73,6 +76,46 @@ export default function ProctoringDashboard() {
     }
     return () => clearInterval(timer);
   }, [isExamStarted, isExamSubmitted]);
+
+
+  const captureAndAnalyzeFrame = useCallback(async () => {
+    if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    
+    context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const dataUri = canvas.toDataURL('image/jpeg');
+
+    try {
+      const result = await analyzeFrame({ photoDataUri: dataUri });
+      let violationMessage = '';
+      if (result.isLookingAway) {
+        violationMessage += 'User is looking away from the screen. ';
+      }
+      if (result.prohibitedObjects.length > 0) {
+        violationMessage += `Prohibited object(s) detected: ${result.prohibitedObjects.join(', ')}.`;
+      }
+      if (violationMessage) {
+        const newViolation = `Violation: ${violationMessage}`;
+        setFrameAnalysisViolation(newViolation);
+        setViolations(prev => [...prev, newViolation]);
+      }
+    } catch (error) {
+      console.error("Error analyzing frame:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    let analysisInterval: NodeJS.Timeout;
+    if (isExamStarted && !isExamSubmitted) {
+      analysisInterval = setInterval(captureAndAnalyzeFrame, FRAME_ANALYSIS_INTERVAL);
+    }
+    return () => clearInterval(analysisInterval);
+  }, [isExamStarted, isExamSubmitted, captureAndAnalyzeFrame]);
 
   const handleVisibilityChange = useCallback(async () => {
     if (isExamStarted && !visibilityWarning && !isExamSubmitted) {
@@ -123,7 +166,7 @@ export default function ProctoringDashboard() {
     const secs = seconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
-
+  
   if (isExamSubmitted) {
     const timeTaken = EXAM_DURATION_SECONDS - timeLeft;
     return (
@@ -174,6 +217,23 @@ export default function ProctoringDashboard() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => handleSubmitExam(true)}>Acknowledge</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+       <AlertDialog open={!!frameAnalysisViolation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+             <div className="flex justify-center mb-4">
+                <AlertTriangle className="h-12 w-12 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-center text-2xl">Potential Violation Detected</AlertDialogTitle>
+            <AlertDialogDescription className="text-center pt-2">
+              {frameAnalysisViolation} This has been logged. Please adhere to the exam rules.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setFrameAnalysisViolation(null)}>I Understand</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -339,7 +399,7 @@ export default function ProctoringDashboard() {
                       <SampleExam onSubmit={() => handleSubmitExam(false)} />
                   </div>
                   <div className="space-y-6">
-                      <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
+                      <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" ref={videoRef} />
                       <Card>
                           <CardHeader>
                               <CardTitle className="text-lg">Your Mobile (Room View)</CardTitle>

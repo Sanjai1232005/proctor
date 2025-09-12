@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CameraOff } from 'lucide-react';
 
@@ -10,14 +10,17 @@ interface CameraFeedProps {
   label: string;
 }
 
-export default function CameraFeed({ stream, error, label }: CameraFeedProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+const CameraFeed = forwardRef<HTMLVideoElement, CameraFeedProps>(({ stream, error, label }, ref) => {
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  
+  // Use the forwarded ref if it exists, otherwise use the internal ref
+  const videoRef = ref || internalVideoRef;
 
   useEffect(() => {
-    if (videoRef.current && stream) {
+    if (videoRef && 'current' in videoRef && videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, videoRef]);
 
   return (
     <Card>
@@ -51,4 +54,8 @@ export default function CameraFeed({ stream, error, label }: CameraFeedProps) {
       </CardContent>
     </Card>
   );
-}
+});
+
+CameraFeed.displayName = 'CameraFeed';
+
+export default CameraFeed;
