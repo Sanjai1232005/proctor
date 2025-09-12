@@ -11,7 +11,7 @@ import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartph
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
-import { getTabSwitchWarning, analyzeFrame } from '@/lib/actions';
+import { getTabSwitchWarning, analyzeFrameAction } from '@/lib/actions';
 import { useMediaPermissions } from '@/hooks/useMediaPermissions';
 
 import CameraFeed from './CameraFeed';
@@ -87,11 +87,15 @@ export default function ProctoringDashboard() {
     const context = canvas.getContext('2d');
     if (!context) return;
     
+    // Flip the image horizontally
+    context.translate(canvas.width, 0);
+    context.scale(-1, 1);
+    
     context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
     const dataUri = canvas.toDataURL('image/jpeg');
 
     try {
-      const result = await analyzeFrame({ photoDataUri: dataUri });
+      const result = await analyzeFrameAction({ photoDataUri: dataUri });
       let violationMessage = '';
       if (result.isLookingAway) {
         violationMessage += 'User is looking away from the screen. ';
@@ -432,3 +436,5 @@ export default function ProctoringDashboard() {
     </div>
   );
 }
+
+    
