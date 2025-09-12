@@ -15,10 +15,12 @@ import CameraFeed from './CameraFeed';
 import QRCodeDisplay from './QRCodeDisplay';
 import StatusPanel from './StatusPanel';
 import VisibilityWarningDialog from './VisibilityWarningDialog';
+import SampleExam from './SampleExam';
 
 export default function ProctoringDashboard() {
   const router = useRouter();
   const [isExamStarted, setIsExamStarted] = useState(false);
+  const [isExamSubmitted, setIsExamSubmitted] = useState(false);
   const [isQrScanned, setIsQrScanned] = useState(false);
   const [visibilityWarning, setVisibilityWarning] = useState<string | null>(null);
 
@@ -56,6 +58,11 @@ export default function ProctoringDashboard() {
       router.push('/login');
     }
   };
+
+  const handleSubmitExam = () => {
+    setIsExamSubmitted(true);
+    exitFullscreen();
+  }
 
   return (
     <div ref={fullscreenRef} className="min-h-screen bg-background text-foreground flex flex-col p-4 sm:p-6 lg:p-8">
@@ -104,18 +111,24 @@ export default function ProctoringDashboard() {
             </Card>
           </div>
         ) : (
+          <div>
             <div className='flex items-center justify-center mb-4'>
                  <h2 className="text-2xl font-headline text-center">Exam in Progress</h2>
                  <Button onClick={isFullscreen ? exitFullscreen : requestFullscreen} variant="ghost" size="icon" className="ml-4">
                     {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
                  </Button>
             </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <SampleExam onSubmit={handleSubmitExam} isSubmitted={isExamSubmitted} />
+                </div>
+                <div className="space-y-6">
+                    <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
+                    <QRCodeDisplay isScanned={isQrScanned} />
+                </div>
+            </div>
+          </div>
         )}
-
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 ${!isExamStarted ? 'opacity-50 pointer-events-none' : ''}`}>
-          <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
-          <QRCodeDisplay isScanned={isQrScanned} />
-        </div>
       </main>
 
       <VisibilityWarningDialog
