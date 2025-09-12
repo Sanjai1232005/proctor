@@ -24,6 +24,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
+import { cn } from '@/lib/utils';
 
 const EXAM_DURATION_SECONDS = 30 * 60; // 30 minutes
 
@@ -362,7 +363,7 @@ export default function ProctoringDashboard() {
 
       <VisibilityWarningDialog
         isOpen={!!visibilityWarning}
-        warningMessage={visibilityWarning || ''}
+        warningMessage={warningMessage || ''}
         onClose={() => {
             setVisibilityWarning(null);
             requestFullscreen();
