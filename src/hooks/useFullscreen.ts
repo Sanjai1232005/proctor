@@ -26,7 +26,7 @@ export function useFullscreen(elementRef: React.RefObject<HTMLElement>) {
   }, [elementRef, isFullscreen]);
 
   const exitFullscreen = useCallback(async () => {
-    if (isFullscreen) {
+    if (document.fullscreenElement && isFullscreen) {
       try {
         await document.exitFullscreen();
       } catch (error) {
