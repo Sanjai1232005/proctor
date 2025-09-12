@@ -105,7 +105,7 @@ export default function SampleExam({ onSubmit }: SampleExamProps) {
       <div className="flex flex-1 min-h-0">
         <aside className="w-1/4 p-4 border-r">
           <h3 className="font-semibold mb-4 text-center">Question Palette</h3>
-          <ScrollArea className="h-full pr-4">
+          <ScrollArea className="h-[calc(100%-2rem)] pr-4">
             <div className="grid grid-cols-4 gap-2">
               {questions.map((q, index) => (
                 <Button
