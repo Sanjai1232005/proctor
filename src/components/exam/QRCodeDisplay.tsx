@@ -15,12 +15,11 @@ export default function QRCodeDisplay({ isScanned, onScanned }: QRCodeDisplayPro
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    // This check is to prevent generating a new QR code URL on every render.
-    if (!qrCodeUrl) {
-        const mobileUrlPath = process.env.NEXT_PUBLIC_PHONE_CAMERA_URL || '/mobile-stream';
-        const fullUrl = window.location.origin + mobileUrlPath;
-        const encodedUrl = encodeURIComponent(fullUrl);
-        setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodedUrl}`);
+    if (typeof window !== 'undefined' && !qrCodeUrl) {
+      const mobileUrlPath = '/mobile-stream';
+      const fullUrl = window.location.origin + mobileUrlPath;
+      const encodedUrl = encodeURIComponent(fullUrl);
+      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodedUrl}`);
     }
   }, [qrCodeUrl]);
 
@@ -30,6 +29,7 @@ export default function QRCodeDisplay({ isScanned, onScanned }: QRCodeDisplayPro
           <div className="flex flex-col items-center justify-center h-full aspect-square w-48">
             <CheckCircle className="h-20 w-20 text-green-500 mb-4" />
             <h3 className="font-semibold">Connected</h3>
+            <p className="text-sm text-muted-foreground mt-2">Your mobile device is ready.</p>
           </div>
         ) : (
           <>

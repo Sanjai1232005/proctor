@@ -108,28 +108,34 @@ export default function ProctoringDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-8 p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
-                    <StatusPanel
-                        title="Webcam"
-                        icon={Monitor}
-                        status={webcamError ? 'error' : webcamStream ? 'connected' : 'pending'}
-                        description={webcamError ? webcamError : webcamStream ? "Webcam connected successfully." : "Waiting for permission..."}
-                        action={webcamError ? <Button onClick={retryWebcam} className="mt-2">Retry</Button> : null}
-                    />
-                    <StatusPanel
-                        title="Room View"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                    <div className="space-y-6">
+                        <StatusPanel
+                            title="Webcam"
+                            icon={Monitor}
+                            status={webcamError ? 'error' : webcamStream ? 'connected' : 'pending'}
+                            description={webcamError ? webcamError : webcamStream ? "Webcam connected successfully." : "Waiting for permission..."}
+                            action={webcamError ? <Button onClick={retryWebcam} className="mt-2">Retry</Button> : null}
+                        />
+                         <StatusPanel
+                            title="Microphone"
+                            icon={Mic}
+                            status={'connected'}
+                            description="Audio monitoring is active."
+                        />
+                    </div>
+                     <StatusPanel
+                        title="Room View (Mobile)"
                         icon={Smartphone}
                         status={isQrScanned ? 'connected' : 'pending'}
-                        description={isQrScanned ? "Mobile camera connected." : "Scan QR to connect your phone."}
+                        description={isQrScanned ? "Mobile camera connected. Position it to show your exam environment." : "Scan the QR code with your phone to set up the room view camera."}
                     >
                         <QRCodeDisplay isScanned={isQrScanned} onScanned={() => setIsQrScanned(true)} />
                     </StatusPanel>
-                    <StatusPanel
-                        title="Microphone"
-                        icon={Mic}
-                        status={'connected'}
-                        description="Audio monitoring is active."
-                    />
+                </div>
+                 <div className="grid md:grid-cols-2 gap-6">
+                    <CameraFeed stream={webcamStream} error={webcamError} label="Webcam Preview" />
+                    <CameraFeed stream={null} error={isQrScanned ? null : "Scan QR code to connect"} label="Mobile Camera Preview" />
                 </div>
                 <Button
                   onClick={handleStartExam}
@@ -160,6 +166,7 @@ export default function ProctoringDashboard() {
                 </div>
                 <div className="space-y-6">
                     <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
+                    <CameraFeed stream={null} error={null} label="Your Mobile (Room View)" />
                 </div>
             </div>
           </div>
@@ -168,7 +175,7 @@ export default function ProctoringDashboard() {
 
       <VisibilityWarningDialog
         isOpen={!!visibilityWarning}
-        warningMessage={visibilityWarning}
+        warningMessage={visibilityWarning || ''}
         onClose={() => {
             setVisibilityWarning(null);
             requestFullscreen();
