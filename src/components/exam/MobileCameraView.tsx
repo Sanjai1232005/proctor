@@ -1,12 +1,14 @@
 'use client';
 
 import { useCamera } from '@/hooks/useCamera';
-import { Camera, CameraOff, Video } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { Camera, CameraOff, Video, RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Button } from '../ui/button';
 
 export default function MobileCameraView() {
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const { stream, error, retry } = useCamera({
-    video: { facingMode: 'user' }, // default to front camera
+    video: { facingMode },
   });
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -16,6 +18,10 @@ export default function MobileCameraView() {
     }
   }, [stream]);
 
+  const toggleCamera = useCallback(() => {
+    setFacingMode((prevMode) => (prevMode === 'user' ? 'environment' : 'user'));
+  }, []);
+
   return (
     <main className="fixed inset-0 bg-gray-900 text-white flex flex-col items-center justify-center">
       {stream && !error ? (
@@ -23,6 +29,7 @@ export default function MobileCameraView() {
           ref={videoRef}
           autoPlay
           playsInline
+          muted
           className="w-full h-full object-cover"
         />
       ) : (
@@ -38,12 +45,12 @@ export default function MobileCameraView() {
                 </div>
                 <p className="mt-2 text-sm text-red-200">{error}</p>
               </div>
-              <button
+              <Button
                 onClick={retry}
-                className="mt-6 px-6 py-2 bg-primary rounded-lg font-semibold hover:bg-primary/80 transition-colors"
+                className="mt-6"
               >
                 Try Again
-              </button>
+              </Button>
             </>
           ) : (
             <p className="text-gray-400">Requesting camera access...</p>
@@ -51,8 +58,12 @@ export default function MobileCameraView() {
         </div>
       )}
        {stream && (
-            <div className="absolute bottom-4 left-4 right-4 bg-black/50 p-3 rounded-lg text-center text-sm">
-                <p>Point this camera to show your exam environment. Keep this page open.</p>
+            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-black/50 p-3 rounded-lg text-center text-sm">
+                <p className='flex-1'>Point this camera to show your exam environment.</p>
+                 <Button onClick={toggleCamera} variant="outline" size="icon" className="bg-white/10 border-white/20 hover:bg-white/20">
+                    <RefreshCw className="h-5 w-5" />
+                    <span className="sr-only">Switch Camera</span>
+                </Button>
             </div>
         )}
     </main>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 type UseCameraOptions = {
   video?: boolean | MediaTrackConstraints;
@@ -11,10 +11,17 @@ export function useCamera(options: UseCameraOptions = { video: true, audio: fals
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Memoize options to prevent re-renders from causing `getStream` to be recreated
+  const memoizedOptions = useMemo(() => options, [JSON.stringify(options)]);
+
   const getStream = useCallback(async () => {
     setError(null);
+    // Stop any existing stream before getting a new one
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia(options);
+      const mediaStream = await navigator.mediaDevices.getUserMedia(memoizedOptions);
       setStream(mediaStream);
     } catch (err) {
       if (err instanceof DOMException) {
@@ -30,16 +37,26 @@ export function useCamera(options: UseCameraOptions = { video: true, audio: fals
         console.error(err);
       }
     }
-  }, [options]);
+  }, [memoizedOptions, stream]);
 
   useEffect(() => {
     getStream();
 
     return () => {
-      stream?.getTracks().forEach((track) => track.stop());
+      // This cleanup function will run when the component unmounts
+      // or when memoizedOptions changes, but we want to make sure
+      // we are not leaving streams open.
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, [memoizedOptions]); // Rerun effect if options change
 
-  return { stream, error, retry: getStream };
+  const retry = useCallback(() => {
+    getStream();
+  }, [getStream]);
+
+
+  return { stream, error, retry };
 }
