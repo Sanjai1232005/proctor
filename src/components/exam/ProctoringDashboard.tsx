@@ -256,8 +256,8 @@ export default function ProctoringDashboard() {
             </Card>
           </div>
         ) : (
-          <ScrollArea className="h-[calc(100vh-10rem)]">
-            <div className='flex items-center justify-between mb-4 pr-4'>
+          <div className='h-[calc(100vh-8rem)] flex flex-col'>
+            <div className='flex items-center justify-between mb-4'>
                  <h2 className="text-2xl font-bold">Exam in Progress</h2>
                  <div className='flex items-center gap-2'>
                     <span className='text-sm text-muted-foreground'>FS-Mode</span>
@@ -266,29 +266,31 @@ export default function ProctoringDashboard() {
                     </Button>
                  </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pr-4">
-                <div className="lg:col-span-2">
-                    <SampleExam onSubmit={handleSubmitExam} />
-                </div>
-                <div className="space-y-6">
-                    <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
-                     <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Your Mobile (Room View)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="aspect-video w-full rounded-md overflow-hidden bg-secondary flex items-center justify-center">
-                                <div className="text-center text-green-600 p-4">
-                                    <Video className="mx-auto h-12 w-12 mb-2" />
-                                    <p className="font-semibold">Feed Active</p>
-                                    <p className="text-sm text-muted-foreground">Keep mobile page open.</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-          </ScrollArea>
+            <ScrollArea className="flex-grow pr-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                      <SampleExam onSubmit={handleSubmitExam} />
+                  </div>
+                  <div className="space-y-6">
+                      <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
+                      <Card>
+                          <CardHeader>
+                              <CardTitle className="text-lg">Your Mobile (Room View)</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                              <div className="aspect-video w-full rounded-md overflow-hidden bg-secondary flex items-center justify-center">
+                                  <div className="text-center text-green-600 p-4">
+                                      <Video className="mx-auto h-12 w-12 mb-2" />
+                                      <p className="font-semibold">Feed Active</p>
+                                      <p className="text-sm text-muted-foreground">Keep mobile page open.</p>
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                  </div>
+              </div>
+            </ScrollArea>
+          </div>
         )}
       </main>
 
@@ -303,5 +305,7 @@ export default function ProctoringDashboard() {
     </div>
   );
 }
+
+    
 
     
