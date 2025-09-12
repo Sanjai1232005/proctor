@@ -363,7 +363,7 @@ export default function ProctoringDashboard() {
 
       <VisibilityWarningDialog
         isOpen={!!visibilityWarning}
-        warningMessage={warningMessage || ''}
+        warningMessage={visibilityWarning || ''}
         onClose={() => {
             setVisibilityWarning(null);
             requestFullscreen();
