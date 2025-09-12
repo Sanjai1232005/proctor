@@ -17,6 +17,7 @@ import StatusPanel from './StatusPanel';
 import VisibilityWarningDialog from './VisibilityWarningDialog';
 import SampleExam from './SampleExam';
 import Image from 'next/image';
+import { ScrollArea } from '../ui/scroll-area';
 
 export default function ProctoringDashboard() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function ProctoringDashboard() {
         )}
       </header>
 
-      <main className="flex-grow p-4 sm:p-6 lg:p-8">
+      <main className="flex-grow p-4 sm:p-6 lg:p-8 overflow-y-auto">
         {!isExamStarted ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Card className="w-full max-w-4xl shadow-lg">
@@ -176,8 +177,8 @@ export default function ProctoringDashboard() {
             </Card>
           </div>
         ) : (
-          <div>
-            <div className='flex items-center justify-between mb-4'>
+          <ScrollArea className="h-[calc(100vh-10rem)]">
+            <div className='flex items-center justify-between mb-4 pr-4'>
                  <h2 className="text-2xl font-bold text-center">Exam in Progress</h2>
                  <div className='flex items-center gap-2'>
                     <span className='text-sm text-muted-foreground'>FS-Mode</span>
@@ -186,7 +187,7 @@ export default function ProctoringDashboard() {
                     </Button>
                  </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pr-4">
                 <div className="lg:col-span-2">
                     <SampleExam onSubmit={handleSubmitExam} />
                 </div>
@@ -208,7 +209,7 @@ export default function ProctoringDashboard() {
                     </Card>
                 </div>
             </div>
-          </div>
+          </ScrollArea>
         )}
       </main>
 
