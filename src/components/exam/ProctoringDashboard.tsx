@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic } from 'lucide-react';
+import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic, Video } from 'lucide-react';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -16,6 +16,7 @@ import QRCodeDisplay from './QRCodeDisplay';
 import StatusPanel from './StatusPanel';
 import VisibilityWarningDialog from './VisibilityWarningDialog';
 import SampleExam from './SampleExam';
+import Image from 'next/image';
 
 export default function ProctoringDashboard() {
   const router = useRouter();
@@ -135,7 +136,32 @@ export default function ProctoringDashboard() {
                 </div>
                  <div className="grid md:grid-cols-2 gap-6">
                     <CameraFeed stream={webcamStream} error={webcamError} label="Webcam Preview" />
-                    <CameraFeed stream={null} error={isQrScanned ? null : "Scan QR code to connect"} label="Mobile Camera Preview" />
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Mobile Camera Preview</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="aspect-video w-full rounded-md overflow-hidden bg-secondary flex items-center justify-center">
+                                {isQrScanned ? (
+                                    <div className="text-center text-green-600 p-4">
+                                        <div className='relative'>
+                                            <Image src="https://picsum.photos/seed/desk/600/400" alt="Sample environment" width={600} height={400} className='rounded-md' data-ai-hint="desk room" />
+                                            <div className='absolute inset-0 bg-green-500/20 flex items-center justify-center rounded-md'>
+                                                <CheckCircle2 className="h-16 w-16 text-white" />
+                                            </div>
+                                        </div>
+                                        <p className="font-semibold mt-2">Mobile Feed Connected</p>
+                                        <p className="text-sm text-muted-foreground">The preview is not live. This confirms connection.</p>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-muted-foreground p-4">
+                                        <Smartphone className="mx-auto h-12 w-12 mb-2" />
+                                        <p>Scan QR code to connect mobile camera</p>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
                 <Button
                   onClick={handleStartExam}
@@ -166,7 +192,20 @@ export default function ProctoringDashboard() {
                 </div>
                 <div className="space-y-6">
                     <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
-                    <CameraFeed stream={null} error={null} label="Your Mobile (Room View)" />
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Your Mobile (Room View)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="aspect-video w-full rounded-md overflow-hidden bg-secondary flex items-center justify-center">
+                                <div className="text-center text-green-600 p-4">
+                                    <Video className="mx-auto h-12 w-12 mb-2" />
+                                    <p className="font-semibold">Feed Active</p>
+                                    <p className="text-sm text-muted-foreground">Keep mobile page open.</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
           </div>
