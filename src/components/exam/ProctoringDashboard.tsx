@@ -26,7 +26,7 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 
 const EXAM_DURATION_SECONDS = 30 * 60; // 30 minutes
-const FRAME_ANALYSIS_INTERVAL = 3000; // 3 seconds
+const FRAME_ANALYSIS_INTERVAL = 6000; // 6 seconds
 
 export default function ProctoringDashboard() {
   const router = useRouter();
@@ -435,6 +435,8 @@ export default function ProctoringDashboard() {
     </div>
   );
 }
+
+    
 
     
 
