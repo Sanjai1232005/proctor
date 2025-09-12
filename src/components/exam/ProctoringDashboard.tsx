@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, Maximize, ShieldCheck, Minimize } from 'lucide-react';
+import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2 } from 'lucide-react';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -29,12 +29,12 @@ export default function ProctoringDashboard() {
   const { isFullscreen, requestFullscreen, exitFullscreen } = useFullscreen(fullscreenRef);
 
   const handleVisibilityChange = useCallback(async () => {
-    if (isExamStarted && !visibilityWarning) {
+    if (isExamStarted && !visibilityWarning && !isExamSubmitted) {
       const warning = await getTabSwitchWarning();
       setVisibilityWarning(warning);
       exitFullscreen();
     }
-  }, [isExamStarted, exitFullscreen, visibilityWarning]);
+  }, [isExamStarted, exitFullscreen, visibilityWarning, isExamSubmitted]);
 
   usePageVisibility(handleVisibilityChange);
 
@@ -64,6 +64,32 @@ export default function ProctoringDashboard() {
     exitFullscreen();
   }
 
+  if (isExamSubmitted) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col p-4 sm:p-6 lg:p-8">
+        <header className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+            <ShieldCheck className="h-8 w-8 text-primary" />
+            <h1 className="font-headline text-3xl font-bold text-primary">Guardian View</h1>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+            </Button>
+        </header>
+        <main className="flex-grow flex items-center justify-center">
+            <Card className="w-full max-w-lg text-center">
+                <CardContent className="p-8">
+                    <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-4" />
+                    <h2 className="text-3xl font-bold mb-2 font-headline">Exam Submitted</h2>
+                    <p className="text-muted-foreground text-lg">Thank you for completing the exam.</p>
+                </CardContent>
+            </Card>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div ref={fullscreenRef} className="min-h-screen bg-background text-foreground flex flex-col p-4 sm:p-6 lg:p-8">
       <header className="flex justify-between items-center mb-6">
@@ -88,15 +114,20 @@ export default function ProctoringDashboard() {
                 <p className="text-muted-foreground">
                   Please complete the following steps to begin your secure exam session.
                 </p>
-                <StatusPanel
-                  webcamStatus={webcamError ? 'error' : webcamStream ? 'connected' : 'pending'}
-                  qrStatus={isQrScanned ? 'scanned' : 'pending'}
-                  webcamError={webcamError}
-                />
-                 {!webcamError && !webcamStream && <p className="text-sm text-muted-foreground">Waiting for camera permission...</p>}
-                 {webcamError && <Button onClick={retryWebcam}>Retry Camera</Button>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className='flex flex-col gap-4'>
+                        <StatusPanel
+                        webcamStatus={webcamError ? 'error' : webcamStream ? 'connected' : 'pending'}
+                        webcamError={webcamError}
+                        />
+                        {!webcamError && !webcamStream && <p className="text-sm text-muted-foreground">Waiting for camera permission...</p>}
+                        {webcamError && <Button onClick={retryWebcam}>Retry Camera</Button>}
+                    </div>
+                    <div>
+                        <QRCodeDisplay isScanned={isQrScanned} onScanned={() => setIsQrScanned(true)} />
+                    </div>
+                </div>
 
-                 {!isQrScanned && <Button onClick={() => setIsQrScanned(true)} variant="outline">I have scanned the QR code</Button>}
 
                 <Button
                   onClick={handleStartExam}
@@ -120,11 +151,11 @@ export default function ProctoringDashboard() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <SampleExam onSubmit={handleSubmitExam} isSubmitted={isExamSubmitted} />
+                    <SampleExam onSubmit={handleSubmitExam} />
                 </div>
                 <div className="space-y-6">
                     <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
-                    <QRCodeDisplay isScanned={isQrScanned} />
+                    <QRCodeDisplay isScanned={isQrScanned} onScanned={() => setIsQrScanned(true)} />
                 </div>
             </div>
           </div>
@@ -133,7 +164,7 @@ export default function ProctoringDashboard() {
 
       <VisibilityWarningDialog
         isOpen={!!visibilityWarning}
-        warningMessage={visibilityWarning || ''}
+        warningMessage={warningMessage || ''}
         onClose={() => {
             setVisibilityWarning(null);
             requestFullscreen();

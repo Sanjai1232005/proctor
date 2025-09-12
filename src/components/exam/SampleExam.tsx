@@ -5,11 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2 } from 'lucide-react';
 
 interface SampleExamProps {
     onSubmit: () => void;
-    isSubmitted: boolean;
 }
 
 const questions = [
@@ -45,7 +43,7 @@ const questions = [
   },
 ];
 
-export default function SampleExam({ onSubmit, isSubmitted }: SampleExamProps) {
+export default function SampleExam({ onSubmit }: SampleExamProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const handleAnswerChange = (questionId: string, value: string) => {
@@ -53,18 +51,6 @@ export default function SampleExam({ onSubmit, isSubmitted }: SampleExamProps) {
   };
   
   const allQuestionsAnswered = questions.every((q) => answers[q.id]);
-
-  if (isSubmitted) {
-    return (
-        <Card>
-            <CardContent className="p-6 text-center">
-                <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Exam Submitted</h2>
-                <p className="text-muted-foreground">Thank you for completing the exam.</p>
-            </CardContent>
-        </Card>
-    );
-  }
 
   return (
     <Card>
