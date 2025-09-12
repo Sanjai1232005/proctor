@@ -1,46 +1,43 @@
 'use client';
 
-import { CheckCircle2, XCircle, Camera } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 
 type Status = 'pending' | 'connected' | 'error';
 
-interface StatusItemProps {
-  icon: React.ElementType;
-  label: string;
+interface StatusPanelProps {
+  icon: LucideIcon;
+  title: string;
   status: Status;
+  description: string;
+  action?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
-const StatusItem = ({ icon: Icon, label, status }: StatusItemProps) => {
+export default function StatusPanel({ icon: Icon, title, status, description, action, children }: StatusPanelProps) {
   const statusConfig = {
-    pending: { color: 'text-muted-foreground', icon: <Icon className="h-5 w-5" /> },
-    connected: { color: 'text-green-600', icon: <CheckCircle2 className="h-5 w-5" /> },
-    scanned: { color: 'text-green-600', icon: <CheckCircle2 className="h-5 w-5" /> }, // This is not used anymore
-    error: { color: 'text-destructive', icon: <XCircle className="h-5 w-5" /> },
+    pending: { color: 'text-amber-600 dark:text-amber-400', icon: <Loader className="h-6 w-6 animate-spin" /> },
+    connected: { color: 'text-green-600 dark:text-green-400', icon: <CheckCircle2 className="h-6 w-6" /> },
+    error: { color: 'text-red-600 dark:text-red-400', icon: <XCircle className="h-6 w-6" /> },
   };
 
   const { color, icon } = statusConfig[status];
 
   return (
-    <div className={cn('flex items-center gap-3 p-3 rounded-lg bg-secondary/50', color)}>
-      {icon}
-      <span className="font-medium">{label}</span>
-    </div>
-  );
-};
-
-interface StatusPanelProps {
-  webcamStatus: Status;
-  webcamError: string | null;
-}
-
-export default function StatusPanel({ webcamStatus, webcamError }: StatusPanelProps) {
-  return (
-    <div className="space-y-3">
-      <StatusItem icon={Camera} label="Webcam" status={webcamStatus} />
-      {webcamStatus === 'error' && webcamError && (
-        <p className="text-sm text-destructive pl-11 -mt-2">{webcamError}</p>
-      )}
-    </div>
+    <Card className={cn("text-left", status === 'error' && 'border-red-500/50 bg-red-500/5', status === 'connected' && 'border-green-500/50 bg-green-500/5')}>
+      <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+        <div className={cn("p-2 rounded-lg", color, status === 'error' && 'bg-red-500/10', status === 'connected' && 'bg-green-500/10', status === 'pending' && 'bg-amber-500/10')}>
+            <Icon className="h-6 w-6" />
+        </div>
+        <CardTitle className='text-xl'>{title}</CardTitle>
+        <div className={cn("ml-auto", color)}>{icon}</div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">{description}</p>
+        {children}
+        {action}
+      </CardContent>
+    </Card>
   );
 }

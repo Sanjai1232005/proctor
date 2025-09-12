@@ -3,8 +3,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic } from 'lucide-react';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -66,74 +66,76 @@ export default function ProctoringDashboard() {
 
   if (isExamSubmitted) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col p-4 sm:p-6 lg:p-8">
-        <header className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-            <ShieldCheck className="h-8 w-8 text-primary" />
-            <h1 className="font-headline text-3xl font-bold text-primary">Guardian View</h1>
-            </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-            </Button>
-        </header>
-        <main className="flex-grow flex items-center justify-center">
-            <Card className="w-full max-w-lg text-center">
-                <CardContent className="p-8">
-                    <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-4" />
-                    <h2 className="text-3xl font-bold mb-2 font-headline">Exam Submitted</h2>
-                    <p className="text-muted-foreground text-lg">Thank you for completing the exam.</p>
-                </CardContent>
-            </Card>
-        </main>
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
+        <Card className="w-full max-w-lg text-center shadow-lg">
+            <CardContent className="p-8">
+                <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-6" />
+                <h2 className="text-3xl font-bold mb-2">Exam Submitted</h2>
+                <p className="text-muted-foreground text-lg mb-6">Thank you for completing the exam.</p>
+                <Button onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout and Exit
+                </Button>
+            </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div ref={fullscreenRef} className="min-h-screen bg-background text-foreground flex flex-col p-4 sm:p-6 lg:p-8">
-      <header className="flex justify-between items-center mb-6">
+    <div ref={fullscreenRef} className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-8 w-8 text-primary" />
-          <h1 className="font-headline text-3xl font-bold text-primary">Guardian View</h1>
+          <h1 className="text-xl font-bold text-primary">Guardian View</h1>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
+        {!isExamStarted && (
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+            </Button>
+        )}
       </header>
 
-      <main className="flex-grow">
+      <main className="flex-grow p-4 sm:p-6 lg:p-8">
         {!isExamStarted ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <Card className="w-full max-w-2xl">
+            <Card className="w-full max-w-4xl shadow-lg">
               <CardHeader>
-                <CardTitle className="font-headline text-2xl">Exam Readiness Check</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <p className="text-muted-foreground">
+                <CardTitle className="text-3xl font-bold">Exam Readiness Check</CardTitle>
+                <CardDescription className="text-muted-foreground pt-2">
                   Please complete the following steps to begin your secure exam session.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className='flex flex-col gap-4'>
-                        <StatusPanel
-                        webcamStatus={webcamError ? 'error' : webcamStream ? 'connected' : 'pending'}
-                        webcamError={webcamError}
-                        />
-                        {!webcamError && !webcamStream && <p className="text-sm text-muted-foreground">Waiting for camera permission...</p>}
-                        {webcamError && <Button onClick={retryWebcam}>Retry Camera</Button>}
-                    </div>
-                    <div>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8 p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+                    <StatusPanel
+                        title="Webcam"
+                        icon={Monitor}
+                        status={webcamError ? 'error' : webcamStream ? 'connected' : 'pending'}
+                        description={webcamError ? webcamError : webcamStream ? "Webcam connected successfully." : "Waiting for permission..."}
+                        action={webcamError ? <Button onClick={retryWebcam} className="mt-2">Retry</Button> : null}
+                    />
+                    <StatusPanel
+                        title="Room View"
+                        icon={Smartphone}
+                        status={isQrScanned ? 'connected' : 'pending'}
+                        description={isQrScanned ? "Mobile camera connected." : "Scan QR to connect your phone."}
+                    >
                         <QRCodeDisplay isScanned={isQrScanned} onScanned={() => setIsQrScanned(true)} />
-                    </div>
+                    </StatusPanel>
+                    <StatusPanel
+                        title="Microphone"
+                        icon={Mic}
+                        status={'connected'}
+                        description="Audio monitoring is active."
+                    />
                 </div>
-
-
                 <Button
                   onClick={handleStartExam}
                   disabled={!webcamStream || !isQrScanned}
                   size="lg"
-                  className="w-full"
+                  className="w-full max-w-xs mx-auto text-lg"
                 >
                   <Maximize className="mr-2 h-5 w-5" />
                   Start Secure Exam
@@ -143,11 +145,14 @@ export default function ProctoringDashboard() {
           </div>
         ) : (
           <div>
-            <div className='flex items-center justify-center mb-4'>
-                 <h2 className="text-2xl font-headline text-center">Exam in Progress</h2>
-                 <Button onClick={isFullscreen ? exitFullscreen : requestFullscreen} variant="ghost" size="icon" className="ml-4">
-                    {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                 </Button>
+            <div className='flex items-center justify-between mb-4'>
+                 <h2 className="text-2xl font-bold text-center">Exam in Progress</h2>
+                 <div className='flex items-center gap-2'>
+                    <span className='text-sm text-muted-foreground'>FS-Mode</span>
+                    <Button onClick={isFullscreen ? exitFullscreen : requestFullscreen} variant="outline" size="icon" className="ml-auto">
+                        {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                    </Button>
+                 </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
@@ -155,7 +160,6 @@ export default function ProctoringDashboard() {
                 </div>
                 <div className="space-y-6">
                     <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
-                    <QRCodeDisplay isScanned={isQrScanned} onScanned={() => setIsQrScanned(true)} />
                 </div>
             </div>
           </div>
@@ -164,7 +168,7 @@ export default function ProctoringDashboard() {
 
       <VisibilityWarningDialog
         isOpen={!!visibilityWarning}
-        warningMessage={visibilityWarning || ''}
+        warningMessage={visibilityWarning}
         onClose={() => {
             setVisibilityWarning(null);
             requestFullscreen();

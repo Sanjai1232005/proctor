@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LoginForm() {
@@ -16,7 +15,6 @@ export default function LoginForm() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Basic validation, no real auth
     if (username.trim() !== '' && password.trim() !== '') {
       try {
         localStorage.setItem('guardian-view-auth', 'true');
@@ -38,40 +36,34 @@ export default function LoginForm() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
-        <CardDescription>Enter your credentials to access the exam portal.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              type="text"
-              placeholder="e.g., testuser"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="e.g., password123"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-            Enter Secure Exam
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <form onSubmit={handleLogin} className="grid gap-4">
+      <div className="grid gap-2">
+        <Label htmlFor="username">Username</Label>
+        <Input
+          id="username"
+          type="text"
+          placeholder="e.g., testuser"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+      </div>
+      <div className="grid gap-2">
+        <div className="flex items-center">
+          <Label htmlFor="password">Password</Label>
+        </div>
+        <Input
+          id="password"
+          type="password"
+          placeholder="e.g., password123"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <Button type="submit" className="w-full">
+        Enter Secure Exam
+      </Button>
+    </form>
   );
 }

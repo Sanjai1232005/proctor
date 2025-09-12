@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
@@ -53,23 +53,24 @@ export default function SampleExam({ onSubmit }: SampleExamProps) {
   const allQuestionsAnswered = questions.every((q) => answers[q.id]);
 
   return (
-    <Card>
+    <Card className="h-full shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Sample Exam</CardTitle>
+        <CardTitle className="text-2xl">Sample Exam</CardTitle>
+        <CardDescription>Answer all questions to complete the exam.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        {questions.map((question) => (
+        {questions.map((question, index) => (
           <div key={question.id}>
-            <p className="font-semibold mb-4">{question.text}</p>
+            <p className="font-semibold mb-4">{index + 1}. {question.text}</p>
             <RadioGroup
               value={answers[question.id]}
               onValueChange={(value) => handleAnswerChange(question.id, value)}
-              className="space-y-2"
+              className="space-y-3"
             >
               {question.options.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
+                <div key={option.id} className="flex items-center space-x-3 p-3 rounded-lg border has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
                   <RadioGroupItem value={option.id} id={option.id} />
-                  <Label htmlFor={option.id} className="font-normal">{option.text}</Label>
+                  <Label htmlFor={option.id} className="font-normal text-base flex-1 cursor-pointer">{option.text}</Label>
                 </div>
               ))}
             </RadioGroup>
@@ -77,7 +78,7 @@ export default function SampleExam({ onSubmit }: SampleExamProps) {
         ))}
       </CardContent>
       <CardFooter>
-        <Button onClick={onSubmit} className="w-full" disabled={!allQuestionsAnswered}>
+        <Button onClick={onSubmit} size="lg" className="w-full" disabled={!allQuestionsAnswered}>
           Submit Exam
         </Button>
       </CardFooter>
