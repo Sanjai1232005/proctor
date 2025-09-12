@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic, Video, Clock } from 'lucide-react';
+import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic, Video, Clock, AlertTriangle, FileText } from 'lucide-react';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -19,6 +19,8 @@ import SampleExam from './SampleExam';
 import Image from 'next/image';
 import { ScrollArea } from '../ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
 const EXAM_DURATION_SECONDS = 30 * 60; // 30 minutes
 
@@ -30,6 +32,7 @@ export default function ProctoringDashboard() {
   const [visibilityWarning, setVisibilityWarning] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_SECONDS);
   const [isTimeUp, setIsTimeUp] = useState(false);
+  const [agreedToGuidelines, setAgreedToGuidelines] = useState(false);
 
   const { stream: webcamStream, error: webcamError, retry: retryWebcam } = useCamera({video: true, audio: true});
   const fullscreenRef = useRef<HTMLDivElement>(null);
@@ -70,6 +73,10 @@ export default function ProctoringDashboard() {
     }
     if (!isQrScanned) {
         alert("Please scan the QR code with your mobile device and confirm before starting.");
+        return;
+    }
+    if (!agreedToGuidelines) {
+        alert("You must agree to the exam guidelines to start the exam.");
         return;
     }
     setIsExamStarted(true);
@@ -184,7 +191,8 @@ export default function ProctoringDashboard() {
                         <QRCodeDisplay isScanned={isQrScanned} onScanned={() => setIsQrScanned(true)} />
                     </StatusPanel>
                 </div>
-                 <div className="grid md:grid-cols-2 gap-6">
+
+                <div className="grid md:grid-cols-2 gap-6">
                     <CameraFeed stream={webcamStream} error={webcamError} label="Webcam Preview" />
                     <Card>
                         <CardHeader>
@@ -213,9 +221,31 @@ export default function ProctoringDashboard() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card className="border-amber-500/50 bg-amber-500/5 text-left">
+                  <CardHeader className="flex flex-row items-start gap-4">
+                    <FileText className="h-6 w-6 text-amber-600 mt-1" />
+                    <div>
+                      <CardTitle className="text-xl text-amber-800">Exam Guidelines</CardTitle>
+                      <CardDescription className="text-amber-700">Please read carefully before starting.</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm text-muted-foreground">
+                    <p><strong>Exam Duration:</strong> This exam is timed for {formatTime(EXAM_DURATION_SECONDS)}.</p>
+                    <p><strong>Stay Focused:</strong> Do not switch tabs, minimize the browser, or navigate away from the exam page. Your session is monitored for this activity.</p>
+                    <p><strong>Environment:</strong> Both your webcam and mobile camera must remain active and unobstructed for the entire duration of the exam.</p>
+                    <p><strong>Integrity:</strong> No other people are allowed in the room. Talking or using unauthorized materials is strictly forbidden.</p>
+                    <p><strong>Submission:</strong> The exam will be automatically submitted when the time runs out. You can also submit it manually once you have answered all questions.</p>
+                    <div className="flex items-center space-x-2 pt-4">
+                      <Checkbox id="terms" checked={agreedToGuidelines} onCheckedChange={(checked) => setAgreedToGuidelines(checked as boolean)} />
+                      <Label htmlFor="terms" className="font-medium">I have read and agree to the exam guidelines.</Label>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <Button
                   onClick={handleStartExam}
-                  disabled={!webcamStream || !isQrScanned}
+                  disabled={!webcamStream || !isQrScanned || !agreedToGuidelines}
                   size="lg"
                   className="w-full max-w-xs mx-auto text-lg"
                 >
@@ -273,3 +303,5 @@ export default function ProctoringDashboard() {
     </div>
   );
 }
+
+    
