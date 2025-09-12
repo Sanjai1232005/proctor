@@ -91,7 +91,7 @@ export default function SampleExam({ onSubmit }: SampleExamProps) {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <Card className="h-full shadow-lg flex flex-col">
+    <Card className="shadow-lg flex flex-col">
       <CardHeader className="flex flex-row justify-between items-start">
         <div>
           <CardTitle className="text-2xl">Sample Exam</CardTitle>
