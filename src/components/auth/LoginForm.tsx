@@ -18,7 +18,7 @@ export default function LoginForm() {
     if (username.trim() !== '' && password.trim() !== '') {
       try {
         localStorage.setItem('guardian-view-auth', 'true');
-        router.push('/exam');
+        router.push('/system-check');
       } catch (error) {
         toast({
             variant: "destructive",

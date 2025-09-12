@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic, Video } from 'lucide-react';
+import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic, Video, Clock } from 'lucide-react';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -18,6 +18,9 @@ import VisibilityWarningDialog from './VisibilityWarningDialog';
 import SampleExam from './SampleExam';
 import Image from 'next/image';
 import { ScrollArea } from '../ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+
+const EXAM_DURATION_SECONDS = 30 * 60; // 30 minutes
 
 export default function ProctoringDashboard() {
   const router = useRouter();
@@ -25,10 +28,30 @@ export default function ProctoringDashboard() {
   const [isExamSubmitted, setIsExamSubmitted] = useState(false);
   const [isQrScanned, setIsQrScanned] = useState(false);
   const [visibilityWarning, setVisibilityWarning] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_SECONDS);
+  const [isTimeUp, setIsTimeUp] = useState(false);
 
-  const { stream: webcamStream, error: webcamError, retry: retryWebcam } = useCamera();
+  const { stream: webcamStream, error: webcamError, retry: retryWebcam } = useCamera({video: true, audio: true});
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, requestFullscreen, exitFullscreen } = useFullscreen(fullscreenRef);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isExamStarted && !isExamSubmitted) {
+      timer = setInterval(() => {
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(timer);
+            setIsTimeUp(true);
+            handleSubmitExam(); 
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isExamStarted, isExamSubmitted]);
 
   const handleVisibilityChange = useCallback(async () => {
     if (isExamStarted && !visibilityWarning && !isExamSubmitted) {
@@ -42,7 +65,7 @@ export default function ProctoringDashboard() {
 
   const handleStartExam = () => {
     if (!webcamStream) {
-        alert("Please grant webcam access to start the exam.");
+        alert("Please grant webcam & microphone access to start the exam.");
         return;
     }
     if (!isQrScanned) {
@@ -66,6 +89,12 @@ export default function ProctoringDashboard() {
     exitFullscreen();
   }
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
   if (isExamSubmitted) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -73,7 +102,7 @@ export default function ProctoringDashboard() {
             <CardContent className="p-8">
                 <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-6" />
                 <h2 className="text-3xl font-bold mb-2">Exam Submitted</h2>
-                <p className="text-muted-foreground text-lg mb-6">Thank you for completing the exam.</p>
+                <p className="text-muted-foreground text-lg mb-6">{isTimeUp ? "Your time is up. The exam has been automatically submitted." : "Thank you for completing the exam."}</p>
                 <Button onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout and Exit
@@ -86,11 +115,31 @@ export default function ProctoringDashboard() {
 
   return (
     <div ref={fullscreenRef} className="min-h-screen bg-background text-foreground flex flex-col">
+       <AlertDialog open={isTimeUp && !isExamSubmitted}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Time's Up!</AlertDialogTitle>
+            <AlertDialogDescription>
+              The exam time has expired. Your answers will be submitted automatically.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleSubmitExam}>Acknowledge</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-8 w-8 text-primary" />
           <h1 className="text-xl font-bold text-primary">Guardian View</h1>
         </div>
+        {isExamStarted && (
+          <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+            <Clock className="h-6 w-6" />
+            <span>{formatTime(timeLeft)}</span>
+          </div>
+        )}
         {!isExamStarted && (
             <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -122,8 +171,8 @@ export default function ProctoringDashboard() {
                          <StatusPanel
                             title="Microphone"
                             icon={Mic}
-                            status={'connected'}
-                            description="Audio monitoring is active."
+                            status={webcamStream?.getAudioTracks().length > 0 ? 'connected' : 'pending'}
+                            description={webcamStream?.getAudioTracks().length > 0 ? "Audio monitoring is active." : "Waiting for permission..."}
                         />
                     </div>
                      <StatusPanel
@@ -179,7 +228,7 @@ export default function ProctoringDashboard() {
         ) : (
           <ScrollArea className="h-[calc(100vh-10rem)]">
             <div className='flex items-center justify-between mb-4 pr-4'>
-                 <h2 className="text-2xl font-bold text-center">Exam in Progress</h2>
+                 <h2 className="text-2xl font-bold">Exam in Progress</h2>
                  <div className='flex items-center gap-2'>
                     <span className='text-sm text-muted-foreground'>FS-Mode</span>
                     <Button onClick={isFullscreen ? exitFullscreen : requestFullscreen} variant="outline" size="icon" className="ml-auto">
