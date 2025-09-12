@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -27,7 +26,7 @@ import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 
 const EXAM_DURATION_SECONDS = 30 * 60; // 30 minutes
-const FRAME_ANALYSIS_INTERVAL = 10000; // 10 seconds
+const FRAME_ANALYSIS_INTERVAL = 3000; // 3 seconds
 
 export default function ProctoringDashboard() {
   const router = useRouter();
@@ -387,7 +386,7 @@ export default function ProctoringDashboard() {
             </Card>
           </div>
         ) : (
-          <div className='h-[calc(100vh-8rem)] flex flex-col'>
+          <div className='flex flex-col h-full'>
             <div className='flex items-center justify-between mb-4'>
                  <h2 className="text-2xl font-bold">Exam in Progress</h2>
                  <div className='flex items-center gap-2'>
@@ -436,5 +435,7 @@ export default function ProctoringDashboard() {
     </div>
   );
 }
+
+    
 
     
