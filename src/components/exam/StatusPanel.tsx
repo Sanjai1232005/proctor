@@ -1,8 +1,9 @@
+
 'use client';
 
 import { CheckCircle2, XCircle, Loader, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 type Status = 'pending' | 'connected' | 'error';
 

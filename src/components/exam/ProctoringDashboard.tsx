@@ -1,15 +1,17 @@
+
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic, Video, Clock, AlertTriangle, FileText } from 'lucide-react';
+import { LogOut, Maximize, ShieldCheck, Minimize, CheckCircle2, Monitor, Smartphone, Mic, Video, Clock, AlertTriangle, FileText, ShieldAlert } from 'lucide-react';
 
 import { useCamera } from '@/hooks/useCamera';
 import { useFullscreen } from '@/hooks/useFullscreen';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { getTabSwitchWarning } from '@/lib/actions';
+import { useMediaPermissions } from '@/hooks/useMediaPermissions';
 
 import CameraFeed from './CameraFeed';
 import QRCodeDisplay from './QRCodeDisplay';
@@ -33,10 +35,24 @@ export default function ProctoringDashboard() {
   const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_SECONDS);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [agreedToGuidelines, setAgreedToGuidelines] = useState(false);
+  const [violations, setViolations] = useState<string[]>([]);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const { stream: webcamStream, error: webcamError, retry: retryWebcam } = useCamera({video: true, audio: true});
+  const { hasVideo, hasAudio, error: mediaPermissionError } = useMediaPermissions(webcamStream);
+  
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, requestFullscreen, exitFullscreen } = useFullscreen(fullscreenRef);
+
+  useEffect(() => {
+    if (isExamStarted && !isExamSubmitted && mediaPermissionError) {
+      if (!permissionError) { // Prevent adding duplicate messages
+        const newViolation = `Violation: ${mediaPermissionError}`;
+        setPermissionError(newViolation);
+        setViolations(prev => [...prev, newViolation]);
+      }
+    }
+  }, [isExamStarted, isExamSubmitted, mediaPermissionError, permissionError]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -60,6 +76,7 @@ export default function ProctoringDashboard() {
     if (isExamStarted && !visibilityWarning && !isExamSubmitted) {
       const warning = await getTabSwitchWarning();
       setVisibilityWarning(warning);
+      setViolations(prev => [...prev, "Violation: Navigated away from the exam tab."]);
       exitFullscreen();
     }
   }, [isExamStarted, exitFullscreen, visibilityWarning, isExamSubmitted]);
@@ -67,7 +84,7 @@ export default function ProctoringDashboard() {
   usePageVisibility(handleVisibilityChange);
 
   const handleStartExam = () => {
-    if (!webcamStream) {
+    if (!webcamStream || !hasVideo || !hasAudio) {
         alert("Please grant webcam & microphone access to start the exam.");
         return;
     }
@@ -110,6 +127,14 @@ export default function ProctoringDashboard() {
                 <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-6" />
                 <h2 className="text-3xl font-bold mb-2">Exam Submitted</h2>
                 <p className="text-muted-foreground text-lg mb-6">{isTimeUp ? "Your time is up. The exam has been automatically submitted." : "Thank you for completing the exam."}</p>
+                 {violations.length > 0 && (
+                  <div className="mb-6 text-left text-sm">
+                    <p className="font-bold text-destructive">{violations.length} violation(s) were recorded:</p>
+                    <ul className="list-disc list-inside text-muted-foreground">
+                      {violations.map((v, i) => <li key={i}>{v.replace('Violation: ', '')}</li>)}
+                    </ul>
+                  </div>
+                )}
                 <Button onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout and Exit
@@ -136,15 +161,40 @@ export default function ProctoringDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
+       <AlertDialog open={!!permissionError}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+             <div className="flex justify-center mb-4">
+                <AlertTriangle className="h-12 w-12 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-center text-2xl">Permission Issue Detected</AlertDialogTitle>
+            <AlertDialogDescription className="text-center pt-2">
+              {permissionError} This is a serious violation of exam rules. The exam will continue, but this event has been logged. Re-enable your devices immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setPermissionError(null)}>I Understand</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-8 w-8 text-primary" />
           <h1 className="text-xl font-bold text-primary">Guardian View</h1>
         </div>
         {isExamStarted && (
-          <div className="flex items-center gap-2 text-lg font-semibold text-primary">
-            <Clock className="h-6 w-6" />
-            <span>{formatTime(timeLeft)}</span>
+            <div className="flex items-center gap-6">
+                 {violations.length > 0 && (
+                    <div className="flex items-center gap-2 text-destructive">
+                        <ShieldAlert className="h-5 w-5" />
+                        <span className="font-semibold">{violations.length} {violations.length === 1 ? 'Violation' : 'Violations'}</span>
+                    </div>
+                )}
+                <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                    <Clock className="h-6 w-6" />
+                    <span>{formatTime(timeLeft)}</span>
+                </div>
           </div>
         )}
         {!isExamStarted && (
@@ -171,15 +221,15 @@ export default function ProctoringDashboard() {
                         <StatusPanel
                             title="Webcam"
                             icon={Monitor}
-                            status={webcamError ? 'error' : webcamStream ? 'connected' : 'pending'}
-                            description={webcamError ? webcamError : webcamStream ? "Webcam connected successfully." : "Waiting for permission..."}
+                            status={webcamError ? 'error' : hasVideo ? 'connected' : 'pending'}
+                            description={webcamError ? webcamError : hasVideo ? "Webcam connected successfully." : "Waiting for permission..."}
                             action={webcamError ? <Button onClick={retryWebcam} className="mt-2">Retry</Button> : null}
                         />
                          <StatusPanel
                             title="Microphone"
                             icon={Mic}
-                            status={webcamStream?.getAudioTracks().length > 0 ? 'connected' : 'pending'}
-                            description={webcamStream?.getAudioTracks().length > 0 ? "Audio monitoring is active." : "Waiting for permission..."}
+                            status={webcamError ? 'error' : hasAudio ? 'connected' : 'pending'}
+                            description={webcamError ? "Audio permission denied or device unavailable." : hasAudio ? "Audio monitoring is active." : "Waiting for permission..."}
                         />
                     </div>
                      <StatusPanel
@@ -245,7 +295,7 @@ export default function ProctoringDashboard() {
 
                 <Button
                   onClick={handleStartExam}
-                  disabled={!webcamStream || !isQrScanned || !agreedToGuidelines}
+                  disabled={!hasVideo || !hasAudio || !isQrScanned || !agreedToGuidelines}
                   size="lg"
                   className="w-full max-w-xs mx-auto text-lg"
                 >
@@ -305,7 +355,3 @@ export default function ProctoringDashboard() {
     </div>
   );
 }
-
-    
-
-    
