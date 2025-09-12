@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -62,7 +63,7 @@ export default function ProctoringDashboard() {
           if (prevTime <= 1) {
             clearInterval(timer);
             setIsTimeUp(true);
-            handleSubmitExam(); 
+            handleSubmitExam(true); 
             return 0;
           }
           return prevTime - 1;
@@ -108,8 +109,11 @@ export default function ProctoringDashboard() {
     }
   };
 
-  const handleSubmitExam = () => {
+  const handleSubmitExam = (autoSubmit = false) => {
     setIsExamSubmitted(true);
+    if(autoSubmit) {
+      setIsTimeUp(true);
+    }
     exitFullscreen();
   }
 
@@ -120,17 +124,29 @@ export default function ProctoringDashboard() {
   };
 
   if (isExamSubmitted) {
+    const timeTaken = EXAM_DURATION_SECONDS - timeLeft;
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
         <Card className="w-full max-w-lg text-center shadow-lg">
-            <CardContent className="p-8">
-                <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-6" />
-                <h2 className="text-3xl font-bold mb-2">Exam Submitted</h2>
-                <p className="text-muted-foreground text-lg mb-6">{isTimeUp ? "Your time is up. The exam has been automatically submitted." : "Thank you for completing the exam."}</p>
+            <CardHeader>
+                <div className="flex justify-center">
+                    <CheckCircle2 className="h-20 w-20 text-green-500 mx-auto mb-4" />
+                </div>
+                <CardTitle className="text-3xl font-bold">Exam Submitted</CardTitle>
+                <CardDescription className="text-muted-foreground text-lg pt-2">{isTimeUp ? "Your time is up. The exam has been automatically submitted." : "Thank you for completing the exam."}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 pt-0 space-y-6">
+                <div className="grid grid-cols-2 gap-4 text-sm text-left">
+                    <div className="font-semibold">Time Taken:</div>
+                    <div>{formatTime(timeTaken)} / {formatTime(EXAM_DURATION_SECONDS)}</div>
+                    <div className="font-semibold">Violations Recorded:</div>
+                    <div className={cn(violations.length > 0 ? 'text-destructive' : 'text-green-600')}>{violations.length}</div>
+                </div>
+
                  {violations.length > 0 && (
-                  <div className="mb-6 text-left text-sm">
-                    <p className="font-bold text-destructive">{violations.length} violation(s) were recorded:</p>
-                    <ul className="list-disc list-inside text-muted-foreground">
+                  <div className="text-left text-sm bg-muted p-4 rounded-md">
+                    <p className="font-bold text-destructive mb-2">Proctoring Event Log:</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                       {violations.map((v, i) => <li key={i}>{v.replace('Violation: ', '')}</li>)}
                     </ul>
                   </div>
@@ -156,7 +172,7 @@ export default function ProctoringDashboard() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={handleSubmitExam}>Acknowledge</AlertDialogAction>
+            <AlertDialogAction onClick={() => handleSubmitExam(true)}>Acknowledge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -319,7 +335,7 @@ export default function ProctoringDashboard() {
             <ScrollArea className="flex-grow pr-4">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2">
-                      <SampleExam onSubmit={handleSubmitExam} />
+                      <SampleExam onSubmit={() => handleSubmitExam(false)} />
                   </div>
                   <div className="space-y-6">
                       <CameraFeed stream={webcamStream} error={webcamError} label="Your Webcam (Front View)" />
